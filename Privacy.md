@@ -10,12 +10,6 @@ PromptBin stores the prompts, shortcuts, preferences, and recent-use information
 
 PromptBin does not collect analytics, browsing history, account details, or personal information. It does not sell or share your data with advertisers or other third parties.
 
-## Supported AI chat websites
-
-PromptBin runs only on the supported AI chat websites listed in its permissions. It reads and updates the chat message box as needed to detect a shortcut and replace it with your saved prompt.
-
-When you send a message, the extension may process that outgoing message locally to perform the replacement. The completed message is sent directly to the AI service you are using, and that service's own privacy policy applies.
-
 ## Backups and imports
 
 You can export your prompt library as a file and import it later. Exported files remain under your control, and PromptBin does not upload them anywhere.
