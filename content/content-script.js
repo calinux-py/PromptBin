@@ -2,6 +2,7 @@
   const BRIDGE_SOURCE = "promptbin-extension";
   const PAGE_SOURCE = "promptbin-page";
   const DEFAULT_TAG_COLOR = "#F6B17A";
+  const SUPPORTED_INPUT_TYPES = new Set(["text", "search", "url", "tel"]);
   let promptMap = {};
   let promptPattern = null;
   let promptBodies = new Set();
@@ -50,15 +51,6 @@
     }
 
     return `//${withoutPrefix.toLowerCase()}`;
-  }
-
-  function escapeHtml(value) {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
   }
 
   function escapeRegExp(value) {
@@ -167,13 +159,13 @@
     // Rich editors can synchronously emit input and mutation callbacks while
     // replacing the shortcut, and controlled editors may commit their DOM on
     // a later task. Suppress this specific editor before touching its value so
-    // none of those callbacks can recreate an overlay from the old //tag.
+    // none of those callbacks can restore decoration for the old //tag.
     expansionSuppressedEditors.add(editor);
     teardownDecorators();
     let nativeInputDispatched = false;
     let replacementApplied = false;
 
-    if (editor instanceof HTMLTextAreaElement) {
+    if (isTextControl(editor)) {
       editor.focus();
       editor.setRangeText(replacement, start, end, "end");
       replacementApplied = true;
@@ -281,11 +273,11 @@
       return null;
     }
 
-    const caret = editor instanceof HTMLTextAreaElement ? editor.selectionStart : null;
-    const beforeCaret = editor instanceof HTMLTextAreaElement
+    const caret = isTextControl(editor) ? editor.selectionStart : null;
+    const beforeCaret = isTextControl(editor)
       ? editor.value.slice(0, caret)
       : contentEditableTextBeforeCaret(editor);
-    if (beforeCaret === null || (editor instanceof HTMLTextAreaElement && caret !== editor.selectionEnd)) {
+    if (beforeCaret === null || (isTextControl(editor) && caret !== editor.selectionEnd)) {
       return null;
     }
 
@@ -336,7 +328,7 @@
       return "";
     }
 
-    if (editor instanceof HTMLTextAreaElement) {
+    if (isTextControl(editor)) {
       return editor.value || "";
     }
 
@@ -351,26 +343,49 @@
     return resolveEditableElement(node) !== null;
   }
 
+  function isTextControl(node) {
+    return node instanceof HTMLTextAreaElement ||
+      (node instanceof HTMLInputElement && SUPPORTED_INPUT_TYPES.has(node.type));
+  }
+
   function resolveEditableElement(node) {
     if (!node) {
       return null;
     }
 
-    if (node instanceof HTMLTextAreaElement) {
+    if (isTextControl(node) && !node.disabled && !node.readOnly) {
       return node;
     }
 
     if (node instanceof Element) {
-      if (node.isContentEditable) {
-        return node;
+      const textControl = node.closest("textarea, input");
+      if (isTextControl(textControl) && !textControl.disabled && !textControl.readOnly) {
+        return textControl;
       }
 
-      const editable = node.closest('[contenteditable="true"], textarea');
-      if (editable instanceof HTMLTextAreaElement || editable?.isContentEditable) {
+      // Resolve descendants to their explicit editing host. This covers both
+      // contenteditable="true" and contenteditable="plaintext-only" without
+      // treating an arbitrary nested span as a separate editor.
+      const editable = node.closest("[contenteditable]");
+      if (editable?.getAttribute("contenteditable")?.toLowerCase() === "false") {
+        return null;
+      }
+      if (editable?.isContentEditable) {
         return editable;
       }
     }
 
+    return null;
+  }
+
+  function resolveEventEditor(event) {
+    const path = typeof event.composedPath === "function" ? event.composedPath() : [event.target];
+    for (const node of path) {
+      const editor = resolveEditableElement(node);
+      if (editor) {
+        return editor;
+      }
+    }
     return null;
   }
 
@@ -437,68 +452,40 @@
     });
   }
 
-  function installStyles() {
-    document.getElementById("promptbin-content-styles")?.remove();
+  function installStyles(root = document) {
+    const existing = root === document
+      ? document.getElementById("promptbin-content-styles")
+      : root.querySelector("#promptbin-content-styles");
+    if (existing?.dataset.promptbinRevision === "native-tag-color") {
+      return;
+    }
+    existing?.remove();
 
     const style = document.createElement("style");
     style.id = "promptbin-content-styles";
-    style.dataset.promptbinRevision = "post-lexical-transaction";
+    style.dataset.promptbinRevision = "native-tag-color";
     style.textContent = `
-      .promptbin-overlay {
-        position: fixed;
-        pointer-events: none;
-        z-index: 2147483646;
-        overflow: hidden;
-        color: transparent;
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: transparent;
-      }
-
-      .promptbin-overlay[hidden] {
-        display: none !important;
-      }
-
-      .promptbin-overlay:not([hidden]) {
-        display: block !important;
-      }
-
-      .promptbin-overlay__inner {
-        min-height: 100%;
-        color: transparent;
-        -webkit-text-fill-color: transparent;
-        white-space: inherit;
-        word-break: inherit;
-      }
-
-      .promptbin-overlay__tag {
-        display: inline;
+      .promptbin-tag-text {
         color: var(--promptbin-tag-color, #F6B17A) !important;
         -webkit-text-fill-color: var(--promptbin-tag-color, #F6B17A) !important;
-        background: transparent;
-        box-shadow: none;
-        border-radius: 0;
-        margin: 0;
-        padding: 0;
-        font-weight: inherit;
+      }
+
+      ::highlight(promptbin-compact-tag) {
+        color: var(--promptbin-tag-color, #F6B17A);
       }
     `;
-    document.documentElement.appendChild(style);
+    (root === document ? document.documentElement : root).appendChild(style);
   }
 
   class EditorDecorator {
     constructor(editor) {
       this.editor = editor;
-      this.overlay = document.createElement("div");
-      this.overlay.className = "promptbin-overlay";
-      this.overlay.hidden = true;
-      this.inner = document.createElement("div");
-      this.inner.className = "promptbin-overlay__inner";
-      this.overlay.appendChild(this.inner);
-      document.documentElement.appendChild(this.overlay);
+      const root = editor.getRootNode();
+      if (root instanceof ShadowRoot) {
+        installStyles(root);
+      }
       this.pendingDeletionText = null;
       this.sync = this.sync.bind(this);
-      this.handleScroll = this.handleScroll.bind(this);
 
       this.mutationObserver = null;
       if (editor.isContentEditable) {
@@ -510,24 +497,17 @@
         });
       }
 
-      editor.addEventListener("scroll", this.handleScroll, true);
-      window.addEventListener("resize", this.sync, true);
-      document.addEventListener("scroll", this.sync, true);
       this.sync();
     }
 
     destroy() {
-      this.editor.removeEventListener("scroll", this.handleScroll, true);
-      window.removeEventListener("resize", this.sync, true);
-      document.removeEventListener("scroll", this.sync, true);
       this.mutationObserver?.disconnect();
       this.hide();
-      this.overlay.remove();
     }
 
     hide() {
-      this.overlay.hidden = true;
-      this.inner.textContent = "";
+      this.editor.classList.remove("promptbin-tag-text");
+      CSS.highlights?.delete("promptbin-compact-tag");
     }
 
     prepareForDeletion() {
@@ -558,32 +538,39 @@
         this.pendingDeletionText = null;
       }
 
-      const matches = getCompactDisplayMatches(text);
+      const highlightText = this.editor.isContentEditable
+        ? (this.editor.textContent || "")
+        : text;
+      const matches = getCompactDisplayMatches(highlightText);
 
       if (!matches.length) {
         this.hide();
         return;
       }
 
-      const chunks = [];
-      let cursor = 0;
-
-      matches.forEach((match) => {
-        const before = text.slice(cursor, match.index);
-        const token = text.slice(match.index, match.index + match.length);
-        if (before) {
-          chunks.push(escapeHtml(before));
-        }
-        chunks.push(`<span class="promptbin-overlay__tag">${escapeHtml(token)}</span>`);
-        cursor = match.index + match.length;
-      });
-
-      if (cursor < text.length) {
-        chunks.push(escapeHtml(text.slice(cursor)));
+      if (!this.editor.isContentEditable) {
+        // Native text controls paint their value as one layer. Coloring the
+        // existing value avoids the alignment bugs caused by mirroring it.
+        this.editor.classList.add("promptbin-tag-text");
+        return;
       }
 
-      this.inner.innerHTML = chunks.join("");
-      this.overlay.hidden = false;
+      if (!CSS.highlights || typeof Highlight !== "function") {
+        // Keep using real editor text on older Chromium versions that do not
+        // provide range highlights.
+        this.editor.classList.add("promptbin-tag-text");
+        return;
+      }
+
+      const ranges = matches.map((match) => {
+        const start = textPosition(this.editor, match.index);
+        const end = textPosition(this.editor, match.index + match.length);
+        const range = new Range();
+        range.setStart(start.node, start.offset);
+        range.setEnd(end.node, end.offset);
+        return range;
+      });
+      CSS.highlights.set("promptbin-compact-tag", new Highlight(...ranges));
     }
 
     sync() {
@@ -592,36 +579,7 @@
         return;
       }
 
-      const rect = this.editor.getBoundingClientRect();
-      const styles = window.getComputedStyle(this.editor);
-      const borderTop = Number.parseFloat(styles.borderTopWidth) || 0;
-      const borderRight = Number.parseFloat(styles.borderRightWidth) || 0;
-      const borderBottom = Number.parseFloat(styles.borderBottomWidth) || 0;
-      const borderLeft = Number.parseFloat(styles.borderLeftWidth) || 0;
-
-      this.overlay.style.top = `${rect.top + borderTop}px`;
-      this.overlay.style.left = `${rect.left + borderLeft}px`;
-      this.overlay.style.width = `${Math.max(0, rect.width - borderLeft - borderRight)}px`;
-      this.overlay.style.height = `${Math.max(0, rect.height - borderTop - borderBottom)}px`;
-      this.overlay.style.padding = styles.padding;
-      this.overlay.style.font = styles.font;
-      this.overlay.style.letterSpacing = styles.letterSpacing;
-      this.overlay.style.wordSpacing = styles.wordSpacing;
-      this.overlay.style.lineHeight = styles.lineHeight;
-      this.overlay.style.textIndent = styles.textIndent;
-      this.overlay.style.textTransform = styles.textTransform;
-      this.overlay.style.textAlign = styles.textAlign;
-      this.overlay.style.borderRadius = styles.borderRadius;
-      this.overlay.style.tabSize = styles.tabSize;
-      this.overlay.style.direction = styles.direction;
-      this.overlay.style.overflowWrap = styles.overflowWrap;
-      this.overlay.style.wordBreak = styles.wordBreak;
-      this.inner.style.transform = `translate(${-this.editor.scrollLeft}px, ${-this.editor.scrollTop}px)`;
       this.render();
-    }
-
-    handleScroll() {
-      this.sync();
     }
   }
 
@@ -635,6 +593,10 @@
     // instance. An orphan has no live owner to hide it when settings change or
     // a shortcut expands, but it is still visible in the page DOM.
     document.querySelectorAll(".promptbin-overlay").forEach((overlay) => overlay.remove());
+    document.querySelectorAll(".promptbin-tag-text").forEach((editor) => {
+      editor.classList.remove("promptbin-tag-text");
+    });
+    CSS.highlights?.delete("promptbin-compact-tag");
   }
 
   function refreshDecorations() {
@@ -705,7 +667,7 @@
     }
 
     // beforeinput fires ahead of the browser's DOM/value update. Remove the
-    // stale tag overlay now so Backspace feels immediate, then redraw once the
+    // stale tag color now so Backspace feels immediate, then redraw once the
     // edit has been applied. The regular input handler remains the primary
     // update path; this frame callback covers editors that dispatch it late.
     if (editorDecorator?.editor === element) {
@@ -719,7 +681,34 @@
     });
   }
 
-  function maybeArmForSubmission() {
+  function expandTextControlForNativeSubmission(editor, matches) {
+    if (!isTextControl(editor) || !matches.length) {
+      return;
+    }
+
+    const original = editor.value;
+    const replacement = original.replace(
+      promptPattern,
+      (tag) => promptMap[normalizeTag(tag)] ?? tag
+    );
+    if (replacement === original) {
+      return;
+    }
+
+    expansionInProgress = true;
+    editor.setRangeText(replacement, 0, original.length, "preserve");
+    editor.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        composed: true,
+        inputType: "insertReplacementText",
+        data: replacement
+      })
+    );
+    expansionInProgress = false;
+  }
+
+  function maybeArmForSubmission({ expandNativeControl = false } = {}) {
     if (!activeEditor) {
       return;
     }
@@ -732,6 +721,12 @@
     decorationsSuspended = true;
     teardownDecorators();
     armBridge(3500);
+    if (expandNativeControl) {
+      // A normal HTML form submission does not use fetch/XHR/WebSocket, so the
+      // page bridge cannot rewrite it. Update successful text controls before
+      // the browser constructs the form payload.
+      expandTextControlForNativeSubmission(activeEditor, matches);
+    }
     recordPromptUsage([...new Set(matches.map((match) => match.tag.toLowerCase()))]);
   }
 
@@ -801,7 +796,7 @@
   document.addEventListener(
     "focusin",
     (event) => {
-      const target = resolveEditableElement(event.target);
+      const target = resolveEventEditor(event);
       if (!target || !isElementVisible(target)) {
         return;
       }
@@ -814,7 +809,7 @@
   document.addEventListener(
     "beforeinput",
     (event) => {
-      const target = resolveEditableElement(event.target);
+      const target = resolveEventEditor(event);
       if (!target) {
         return;
       }
@@ -826,7 +821,7 @@
   document.addEventListener(
     "input",
     (event) => {
-      const target = resolveEditableElement(event.target);
+      const target = resolveEventEditor(event);
       if (!target) {
         return;
       }
@@ -854,7 +849,7 @@
   document.addEventListener(
     "keydown",
     (event) => {
-      const target = resolveEditableElement(event.target);
+      const target = resolveEventEditor(event);
       if (!target) {
         return;
       }
@@ -892,7 +887,7 @@
     "submit",
     (event) => {
       if (activeEditor && event.target instanceof Element && event.target.contains(activeEditor)) {
-        maybeArmForSubmission();
+        maybeArmForSubmission({ expandNativeControl: true });
       }
     },
     true
