@@ -1,0 +1,279 @@
+:root {
+  color-scheme: dark;
+  --bg: #2d3250;
+  --bg-rgb: 45, 50, 80;
+  --bg-elevated: rgba(52, 57, 88, 0.96);
+  --bg-strong: #424769;
+  --bg-strong-rgb: 66, 71, 105;
+  --topbar-rgb: 49, 54, 84;
+  --control-bg: #252943;
+  --border: rgba(112, 119, 161, 0.34);
+  --border-strong: rgba(112, 119, 161, 0.58);
+  --border-rgb: 112, 119, 161;
+  --text: #f6b17a;
+  --text-soft: rgba(246, 177, 122, 0.72);
+  --text-faint: #8d93b8;
+  --text-faint-rgb: 141, 147, 184;
+  --heading: #fff4ea;
+  --heading-soft: #efe4dc;
+  --accent: #f6b17a;
+  --accent-rgb: 246, 177, 122;
+  --accent-hover: #ffc69a;
+  --button-text: #2d3250;
+  --shadow-lg: 0 24px 64px rgba(19, 21, 38, 0.36);
+  --shadow-md: 0 14px 36px rgba(19, 21, 38, 0.24);
+  --font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root[data-theme="basic"] {
+  --bg: #111214;
+  --bg-rgb: 17, 18, 20;
+  --bg-elevated: rgba(29, 30, 33, 0.97);
+  --bg-strong: #303237;
+  --bg-strong-rgb: 48, 50, 55;
+  --topbar-rgb: 23, 24, 27;
+  --control-bg: #18191c;
+  --border: rgba(156, 163, 175, 0.3);
+  --border-strong: rgba(156, 163, 175, 0.52);
+  --border-rgb: 156, 163, 175;
+  --text: #e5e7eb;
+  --text-soft: rgba(229, 231, 235, 0.72);
+  --text-faint: #9ca3af;
+  --text-faint-rgb: 156, 163, 175;
+  --heading: #ffffff;
+  --heading-soft: #f3f4f6;
+  --accent: #e5e7eb;
+  --accent-rgb: 229, 231, 235;
+  --accent-hover: #ffffff;
+  --button-text: #111214;
+}
+
+:root[data-theme="gallery"] {
+  --bg: #263441;
+  --bg-rgb: 38, 52, 65;
+  --bg-elevated: rgba(48, 68, 82, 0.96);
+  --bg-strong: #405b6d;
+  --bg-strong-rgb: 64, 91, 109;
+  --topbar-rgb: 42, 58, 71;
+  --control-bg: #202d38;
+  --border: rgba(110, 145, 168, 0.34);
+  --border-strong: rgba(110, 145, 168, 0.58);
+  --border-rgb: 110, 145, 168;
+  --text: #c7ddea;
+  --text-soft: rgba(199, 221, 234, 0.72);
+  --text-faint: #8fa9ba;
+  --text-faint-rgb: 143, 169, 186;
+  --heading: #f0f5f5;
+  --heading-soft: #dce8eb;
+  --accent: #89b4d4;
+  --accent-rgb: 137, 180, 212;
+  --accent-hover: #a7cbe3;
+  --button-text: #263441;
+}
+
+:root[data-theme="violet"] {
+  --bg: #312d43;
+  --bg-rgb: 49, 45, 67;
+  --bg-elevated: rgba(60, 55, 82, 0.96);
+  --bg-strong: #514a6d;
+  --bg-strong-rgb: 81, 74, 109;
+  --topbar-rgb: 53, 49, 73;
+  --control-bg: #2a263a;
+  --border: rgba(129, 120, 163, 0.34);
+  --border-strong: rgba(129, 120, 163, 0.58);
+  --border-rgb: 129, 120, 163;
+  --text: #d8ceec;
+  --text-soft: rgba(216, 206, 236, 0.72);
+  --text-faint: #9990b5;
+  --text-faint-rgb: 153, 144, 181;
+  --heading: #f7f0ff;
+  --heading-soft: #e5dcf0;
+  --accent: #b7a0d8;
+  --accent-rgb: 183, 160, 216;
+  --accent-hover: #ccb9e6;
+  --button-text: #312d43;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(var(--border-rgb), 0.24), transparent 34%),
+    radial-gradient(circle at right center, rgba(var(--accent-rgb), 0.08), transparent 28%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+body {
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 85%);
+  opacity: 0.5;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.pb-attribution {
+  color: var(--text-faint);
+  font-size: 11px;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.pb-attribution span {
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.pb-attribution:hover,
+.pb-attribution:hover span {
+  color: var(--accent);
+}
+
+.pb-attribution:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid rgba(var(--accent-rgb), 0.58);
+  outline-offset: 3px;
+}
+
+.pb-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.pb-card {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+}
+
+.pb-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pb-brand__mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+
+.pb-brand__eyebrow {
+  margin: 0 0 4px;
+  color: var(--text-soft);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pb-brand__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.pb-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.pb-button:hover {
+  transform: translateY(-1px);
+}
+
+.pb-button:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.58);
+  outline-offset: 2px;
+}
+
+.pb-button--primary {
+  background: var(--accent);
+  color: var(--button-text);
+  font-weight: 750;
+  box-shadow: 0 10px 24px rgba(30, 32, 53, 0.28);
+}
+
+.pb-button--primary:hover {
+  background: var(--accent-hover);
+}
+
+.pb-button--ghost {
+  background: rgba(var(--bg-strong-rgb), 0.68);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.pb-button--ghost:hover {
+  background: var(--bg-strong);
+  border-color: var(--border-strong);
+}
+
+.pb-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 3;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-strong);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.pb-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}

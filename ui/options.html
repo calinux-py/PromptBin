@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PromptBin Library</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <div class="pb-shell options-shell">
+      <header class="options-topbar">
+        <div class="pb-brand options-brand">
+          <img class="pb-brand__mark" src="../promptbin.png" alt="">
+          <div>
+            <h1 class="pb-brand__title">PromptBin</h1>
+            <p class="options-brand__subtitle">Prompt library</p>
+          </div>
+        </div>
+
+        <div class="options-topbar__tools">
+          <div class="options-summary" aria-label="Library summary">
+            <strong id="stat-count">0</strong>
+            <span>prompts</span>
+          </div>
+
+          <label class="options-color-control" for="tag-color">
+            <span class="options-color-control__label">Tag color</span>
+            <input id="tag-color" type="color" value="#F6B17A">
+            <output id="tag-color-value" for="tag-color">#F6B17A</output>
+          </label>
+
+          <div class="options-topbar__divider" aria-hidden="true"></div>
+
+          <button class="pb-button options-button--quiet" id="open-settings" type="button" title="Open PromptBin settings">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></svg>
+            <span>Settings</span>
+          </button>
+
+          <div class="options-file-actions" aria-label="Library file actions">
+            <button class="pb-button options-button--quiet" id="local-backup" type="button" title="Download a local backup that survives extension removal">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM8 4v6h8V5M8 20v-6h8v6"/></svg>
+              <span id="local-backup-label">Local backup</span>
+            </button>
+            <button class="pb-button options-button--quiet" id="import-library" type="button" title="Import prompts from JSON">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
+              <span>Import</span>
+            </button>
+            <button class="pb-button options-button--quiet" id="export-library" type="button" title="Export prompts as JSON">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0 4 4m-4-4L8 7M5 20h14"/></svg>
+              <span>Export</span>
+            </button>
+            <input id="import-file" type="file" accept="application/json" hidden>
+          </div>
+
+          <button class="pb-button pb-button--primary options-new-button" id="new-prompt" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            New prompt
+          </button>
+        </div>
+      </header>
+
+      <div class="options-workspace">
+        <aside class="options-library" aria-label="Prompt library">
+          <div class="options-library__header">
+            <div>
+              <p class="options-eyebrow">Your shortcuts</p>
+              <h2>Library</h2>
+            </div>
+            <span class="options-list__count" id="filtered-count">0 shown</span>
+          </div>
+
+          <div class="options-search">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <label class="options-visually-hidden" for="search">Search prompts</label>
+            <input id="search" type="search" placeholder="Search tags or prompt text" autocomplete="off">
+          </div>
+
+          <div class="options-list__items" id="prompt-list"></div>
+          <footer class="options-library__footer">
+            <a class="pb-attribution" href="https://avenyx.io" target="_blank" rel="noopener noreferrer">Developed by <span>Avenyx</span></a>
+          </footer>
+        </aside>
+
+        <main class="options-editor">
+          <div class="options-editor__header">
+            <div>
+              <p class="options-eyebrow">Prompt editor</p>
+              <h2 id="editor-title">Create a prompt</h2>
+            </div>
+            <p class="options-editor__description">Create a shortcut that expands into a complete prompt.</p>
+          </div>
+
+          <form class="options-form" id="prompt-form">
+            <div class="options-field options-field--tag">
+              <div class="options-field__label-row">
+                <label for="tag-input">Shortcut tag</label>
+                <span>Letters, numbers, - or _ · // is added automatically</span>
+              </div>
+              <div class="options-tag-input">
+                <span aria-hidden="true">//</span>
+                <input id="tag-input" name="tag" type="text" placeholder="research" autocomplete="off" spellcheck="false" required>
+              </div>
+            </div>
+
+            <div class="options-field options-field--prompt">
+              <div class="options-field__label-row">
+                <label for="prompt-input">Prompt content</label>
+                <div class="options-editor__meta" aria-label="Prompt details">
+                  <span id="char-count">0 characters</span>
+                  <span aria-hidden="true">·</span>
+                  <span id="updated-at">Not saved yet</span>
+                </div>
+              </div>
+              <textarea id="prompt-input" name="prompt" placeholder="Write the full prompt you want this shortcut to expand into…" spellcheck="true" required></textarea>
+            </div>
+
+            <div class="options-form__footer">
+              <p class="options-save-hint" id="save-hint">
+                Changes stay on this device. Download a local backup to preserve them after uninstalling.
+              </p>
+
+              <div class="options-form__actions">
+                <button class="pb-button options-delete-button" id="delete-prompt" type="button">
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>
+                  Delete
+                </button>
+                <button class="pb-button pb-button--primary options-save-button" id="save-prompt" type="submit">
+                  Save prompt
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </main>
+      </div>
+    </div>
+
+    <dialog class="options-backup-dialog" id="backup-dialog">
+      <form method="dialog">
+        <h2>Save a local backup?</h2>
+        <p>Keep your prompts in a file outside the extension so they can be restored after reinstalling PromptBin.</p>
+        <label class="options-backup-dialog__checkbox">
+          <input id="backup-dont-ask" type="checkbox">
+          <span>Don't ask me again</span>
+        </label>
+        <div class="options-backup-dialog__actions">
+          <button class="pb-button pb-button--ghost" id="backup-not-now" value="cancel" type="submit">Not now</button>
+          <button class="pb-button pb-button--primary" id="backup-save-copy" value="default" type="button">Save local copy</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="pb-toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -1,0 +1,146 @@
+body {
+  width: 360px;
+  min-height: 0;
+}
+
+.popup-shell {
+  padding: 10px;
+}
+
+.popup-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.popup-brand {
+  gap: 10px;
+}
+
+.popup-brand .pb-brand__mark {
+  width: 34px;
+  height: 34px;
+}
+
+.popup-brand .pb-brand__title {
+  font-size: 18px;
+}
+
+.popup-count {
+  color: var(--text-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.popup-count strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.popup-recent {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(var(--bg-strong-rgb), 0.5);
+}
+
+.popup-recent__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.popup-recent__header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+}
+
+.popup-recent__list {
+  display: grid;
+  gap: 0;
+}
+
+.popup-item,
+.popup-empty {
+  padding: 12px 0 2px;
+}
+
+.popup-item {
+  display: grid;
+  gap: 3px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-item:last-child {
+  border-bottom: 0;
+}
+
+.popup-item__tag {
+  margin: 0;
+  color: var(--tag-color, #f6b17a);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.popup-item__meta,
+.popup-item__preview,
+.popup-empty {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.popup-item__preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popup-item__meta {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.popup-footer {
+  display: flex;
+  align-items: center;
+}
+
+.popup-footer {
+  align-items: flex-end;
+  flex-direction: column-reverse;
+  gap: 10px;
+}
+
+.popup-footer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.popup-footer .pb-button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.popup-footer .pb-button--primary {
+  min-width: 112px;
+}

@@ -1,0 +1,78 @@
+{
+  "manifest_version": 3,
+  "name": "PromptBin",
+  "version": "0.2.1",
+  "description": "Store local prompt shortcuts and expand them visibly or inject them invisibly into supported AI chats.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "*://chatgpt.com/*",
+    "*://chat.openai.com/*",
+    "*://claude.ai/*",
+    "*://www.perplexity.ai/*",
+    "*://perplexity.ai/*",
+    "*://chat.deepseek.com/*",
+    "*://grok.com/*",
+    "*://copilot.microsoft.com/*",
+    "*://gemini.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "promptbin.png",
+    "32": "promptbin.png",
+    "48": "promptbin.png",
+    "128": "promptbin.png"
+  },
+  "action": {
+    "default_popup": "ui/popup.html",
+    "default_title": "PromptBin",
+    "default_icon": {
+      "16": "promptbin.png",
+      "32": "promptbin.png"
+    }
+  },
+  "options_page": "ui/options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://chatgpt.com/*",
+        "*://chat.openai.com/*",
+        "*://claude.ai/*",
+        "*://www.perplexity.ai/*",
+        "*://perplexity.ai/*",
+        "*://chat.deepseek.com/*",
+        "*://grok.com/*",
+        "*://copilot.microsoft.com/*",
+        "*://gemini.google.com/*"
+      ],
+      "js": [
+        "content/page-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://chatgpt.com/*",
+        "*://chat.openai.com/*",
+        "*://claude.ai/*",
+        "*://www.perplexity.ai/*",
+        "*://perplexity.ai/*",
+        "*://chat.deepseek.com/*",
+        "*://grok.com/*",
+        "*://copilot.microsoft.com/*",
+        "*://gemini.google.com/*"
+      ],
+      "js": [
+        "content/content-script.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PromptBin</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <div class="pb-shell popup-shell">
+      <section class="pb-card popup-card">
+        <header class="popup-header">
+          <div class="pb-brand popup-brand">
+            <img class="pb-brand__mark" src="../promptbin.png" alt="PromptBin logo">
+            <h1 class="pb-brand__title">PromptBin</h1>
+          </div>
+          <span class="popup-count"><strong id="popup-count">0</strong> prompts</span>
+        </header>
+
+        <section class="popup-recent" id="recent-section">
+          <div class="popup-recent__header">
+            <h2>Recently used</h2>
+          </div>
+          <div class="popup-recent__list" id="recent-list"></div>
+        </section>
+
+        <footer class="popup-footer">
+          <a class="pb-attribution" href="https://avenyx.io" target="_blank" rel="noopener noreferrer">Developed by <span>Avenyx</span></a>
+          <div class="popup-footer__actions">
+            <button class="pb-button pb-button--ghost" id="open-settings" type="button">Settings</button>
+            <button class="pb-button pb-button--primary" id="open-options" type="button">Open Library</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
