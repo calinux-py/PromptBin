@@ -1,6 +1,4 @@
 (function promptBinContentScript() {
-  const BRIDGE_SOURCE = "promptbin-extension";
-  const PAGE_SOURCE = "promptbin-page";
   const DEFAULT_TAG_COLOR = "#F6B17A";
   const SUPPORTED_INPUT_TYPES = new Set(["text", "search", "url", "tel"]);
   let promptMap = {};
@@ -403,36 +401,6 @@
     return rect.width > 0 && rect.height > 0;
   }
 
-  function pushLibraryToPage() {
-    window.postMessage(
-      {
-        source: BRIDGE_SOURCE,
-        type: "promptbin/library",
-        payload: {
-          promptMap
-        }
-      },
-      "*"
-    );
-  }
-
-  function armBridge(ttlMs = 3500) {
-    // DOM attributes cross Chrome's isolated-world boundary synchronously. This
-    // must be set before the page handles the same Enter/click event.
-    document.documentElement.dataset.promptbinArmedUntil = String(Date.now() + ttlMs);
-
-    window.postMessage(
-      {
-        source: BRIDGE_SOURCE,
-        type: "promptbin/arm",
-        payload: {
-          ttlMs
-        }
-      },
-      "*"
-    );
-  }
-
   async function request(type, payload = {}) {
     const response = await chrome.runtime.sendMessage({
       type,
@@ -708,7 +676,7 @@
     expansionInProgress = false;
   }
 
-  function maybeArmForSubmission({ expandNativeControl = false } = {}) {
+  function maybeExpandForSubmission({ expandNativeControl = false } = {}) {
     if (!activeEditor) {
       return;
     }
@@ -720,14 +688,20 @@
 
     decorationsSuspended = true;
     teardownDecorators();
-    armBridge(3500);
     if (expandNativeControl) {
-      // A normal HTML form submission does not use fetch/XHR/WebSocket, so the
-      // page bridge cannot rewrite it. Update successful text controls before
-      // the browser constructs the form payload.
+      // Update successful native text controls before the browser constructs
+      // the form payload. PromptBin never patches the page's network APIs.
       expandTextControlForNativeSubmission(activeEditor, matches);
+      recordPromptUsage([...new Set(matches.map((match) => match.tag.toLowerCase()))]);
+      return;
     }
-    recordPromptUsage([...new Set(matches.map((match) => match.tag.toLowerCase()))]);
+
+    // Send actions on modern sites usually originate in a controlled rich
+    // editor rather than a native form. Expand the shortcut through that
+    // editor's existing replacement path before the site's event handler runs.
+    // This preserves compact shortcuts without modifying fetch, XHR, or socket
+    // behavior for the whole page.
+    expandShortcutAtCaret(activeEditor, true);
   }
 
   function nearActiveEditor(target) {
@@ -772,7 +746,6 @@
         "--promptbin-tag-color",
         snapshot.settings?.tagColor ?? DEFAULT_TAG_COLOR
       );
-      pushLibraryToPage();
       refreshDecorations();
     } catch (_error) {
       // The extension context can disappear during an update; the host editor
@@ -782,16 +755,6 @@
 
   document.querySelectorAll(".promptbin-overlay").forEach((overlay) => overlay.remove());
   installStyles();
-
-  window.addEventListener("message", (event) => {
-    if (event.source !== window || event.data?.source !== PAGE_SOURCE) {
-      return;
-    }
-
-    if (event.data.type === "promptbin/ready") {
-      pushLibraryToPage();
-    }
-  });
 
   document.addEventListener(
     "focusin",
@@ -877,7 +840,7 @@
       }
 
       if (event.key === "Enter" && !event.shiftKey) {
-        maybeArmForSubmission();
+        maybeExpandForSubmission();
       }
     },
     true
@@ -887,7 +850,7 @@
     "submit",
     (event) => {
       if (activeEditor && event.target instanceof Element && event.target.contains(activeEditor)) {
-        maybeArmForSubmission({ expandNativeControl: true });
+        maybeExpandForSubmission({ expandNativeControl: true });
       }
     },
     true
@@ -901,13 +864,13 @@
         return;
       }
 
-      maybeArmForSubmission();
+      maybeExpandForSubmission();
     },
     true
   );
 
-  chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === "promptbin/libraryUpdated") {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes.promptbinLibraryRevision) {
       reloadLibrary();
     }
   });

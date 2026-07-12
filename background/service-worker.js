@@ -14,18 +14,13 @@ async function getSettings() {
   return normalizeSettings(stored);
 }
 
-async function broadcastLibraryUpdate() {
-  const tabs = await chrome.tabs.query({});
-
-  await Promise.allSettled(
-    tabs
-      .filter((tab) => Number.isInteger(tab.id))
-      .map((tab) =>
-        chrome.tabs.sendMessage(tab.id, {
-          type: "promptbin/libraryUpdated"
-        })
-      )
-  );
+async function notifyLibraryUpdate() {
+  // Content scripts can observe extension storage changes directly. A unique
+  // revision wakes every open PromptBin content script without requiring the
+  // broad `tabs` permission or enumerating the user's open tabs.
+  await chrome.storage.local.set({
+    promptbinLibraryRevision: `${Date.now()}-${crypto.randomUUID()}`
+  });
 }
 
 const handlers = {
@@ -41,19 +36,19 @@ const handlers = {
     const current = await getSettings();
     const settings = normalizeSettings({ ...current, ...payload });
     await chrome.storage.local.set(settings);
-    await broadcastLibraryUpdate();
+    await notifyLibraryUpdate();
     return settings;
   },
 
   async "promptbin/savePrompt"(payload) {
     const prompt = await savePrompt(payload);
-    await broadcastLibraryUpdate();
+    await notifyLibraryUpdate();
     return prompt;
   },
 
   async "promptbin/deletePrompt"(payload) {
     await deletePrompt(payload.tag);
-    await broadcastLibraryUpdate();
+    await notifyLibraryUpdate();
     return { tag: payload.tag };
   },
 
@@ -70,7 +65,7 @@ const handlers = {
     const prompts = await importLibrary(payload.library, {
       replaceExisting: payload.replaceExisting
     });
-    await broadcastLibraryUpdate();
+    await notifyLibraryUpdate();
     return {
       prompts
     };
